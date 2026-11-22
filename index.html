@@ -1,0 +1,590 @@
+<title>Battle for Characters</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#0d0d2b"><link rel="apple-touch-icon" href="icons/icon-180.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Battle"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;800&display=swap">
+<style>
+/* Layout: one phone-first column that fits a single screen. Rival team on top, the character up for bid in the middle (portrait left, details right), your team below. Look: a night-time comic cover, with a gold spotlight, speed lines, ink outlines and loud sound effects. Dark on purpose. */
+:root{
+  --bg:#0d0d2b; --bg-dot:rgba(255,207,46,.07);
+  --panel:#1b1b45; --panel-hi:#2a2a60;
+  --ink:#fff4dc; --dim:#aaaad8;
+  --yel:#ffcf2e; --yel-hi:#ffe680; --marvel:#ec3b3b; --dc:#2f86ff; --good:#3ddc84;
+  --p1:#35d6ff; --p2:#ff8a3d; --ani:#8e4dff;
+  --line:#06061a; --edge:#4a4a8c;
+  --display:'Bangers',Impact,'Arial Black',sans-serif;
+  --body:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+body{
+  background:var(--bg);
+  background-image:radial-gradient(ellipse 110% 55% at 50% -8%,rgba(255,207,46,.2),transparent 62%),radial-gradient(var(--bg-dot) 1.5px,transparent 1.5px),linear-gradient(rgba(8,8,24,.78),rgba(8,8,24,.78)),url(img/bg.jpg);
+  background-size:auto,14px 14px,auto,cover;background-position:0 0,0 0,0 0,center top;background-repeat:no-repeat,repeat,no-repeat,no-repeat;background-attachment:scroll,scroll,fixed,fixed;
+  color:var(--ink);font-family:var(--body);font-weight:600;font-size:16px;line-height:1.4;
+  min-height:100vh;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:repeating-conic-gradient(from 0deg at 50% 30%,rgba(255,255,255,.04) 0 3deg,transparent 3deg 10deg);
+}
+#app{
+  max-width:560px;margin:0 auto;
+  padding-block:8px 16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+}
+.hide{display:none!important}
+.panel{background:linear-gradient(180deg,var(--panel-hi),var(--panel) 45%);border:3px solid var(--line);border-radius:14px;box-shadow:4px 4px 0 var(--line)}
+
+/* buttons */
+.btn{
+  font-family:var(--display);letter-spacing:.05em;font-size:24px;line-height:1;
+  min-height:50px;padding:10px 20px;cursor:pointer;
+  border:3px solid var(--line);border-radius:10px;
+  background:linear-gradient(180deg,var(--yel-hi),var(--yel) 55%);color:var(--line);
+  box-shadow:4px 4px 0 var(--line);
+  transition:transform .08s,box-shadow .08s,filter .15s;
+}
+.btn:hover:not(:disabled){filter:brightness(1.08)}
+.btn:active:not(:disabled){transform:translate(3px,3px);box-shadow:1px 1px 0 var(--line)}
+.btn:disabled{opacity:.35;cursor:not-allowed}
+.btn:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.btn.blue{background:linear-gradient(180deg,#78b0ff,var(--dc) 55%);color:#fff}
+.btn.red{background:linear-gradient(180deg,#ff7f7f,var(--marvel) 55%);color:#fff}
+.btn.big{display:block;width:100%;font-size:30px;padding:12px 24px;margin:8px 0}
+
+/* title screen */
+#title{position:relative;isolation:isolate;overflow:hidden;text-align:center;padding:22px 0 4px}
+#title::before{
+  content:"";position:absolute;left:50%;top:120px;z-index:-1;
+  width:150%;aspect-ratio:1;translate:-50% -50%;
+  background:repeating-conic-gradient(rgba(255,207,46,.17) 0 7.5deg,transparent 7.5deg 15deg);
+  -webkit-mask:radial-gradient(circle,#000 18%,transparent 66%);
+  mask:radial-gradient(circle,#000 18%,transparent 66%);
+  animation:spin 70s linear infinite;
+}
+@keyframes spin{to{rotate:360deg}}
+#title h1{margin:0;display:flex;flex-direction:column;align-items:center;font-family:var(--display);font-weight:400;letter-spacing:.04em;transform:rotate(-3deg) skewX(-4deg)}
+.t1{font-size:clamp(66px,23vw,112px);line-height:.88;color:var(--yel);text-shadow:4px 4px 0 var(--marvel),8px 8px 0 var(--line)}
+.t2{margin:4px 0 0;padding:3px 18px;font-size:clamp(18px,5.5vw,26px);line-height:1;background:var(--marvel);color:#fff;border:3px solid var(--line);border-radius:6px;box-shadow:3px 3px 0 var(--line);transform:rotate(2deg)}
+.t3{font-size:clamp(42px,14vw,78px);line-height:1;color:var(--ink);text-shadow:3px 3px 0 var(--dc),6px 6px 0 var(--line)}
+.fan{display:flex;justify-content:center;align-items:flex-end;margin:20px 0 14px;padding-inline:8px}
+.fan img{
+  --tc:var(--dim);
+  width:clamp(60px,18.5vw,88px);aspect-ratio:3/4;object-fit:cover;margin-inline:-6px;
+  border:3px solid var(--tc);border-radius:10px;background:var(--panel-hi);
+  box-shadow:4px 4px 0 var(--line);
+  transform:translateY(var(--y,0px)) rotate(var(--r,0deg));
+}
+.fan img.M{--tc:var(--marvel)}
+.fan img.D{--tc:var(--dc)}
+.fan img.c{width:clamp(76px,23vw,108px);z-index:2}
+.pitch{max-width:36ch;margin:0 auto 12px;color:var(--dim);font-size:15px}
+.steps{list-style:none;margin:0 0 10px;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(104px,1fr));gap:8px;counter-reset:step;text-align:left}
+.steps li{counter-increment:step;padding:8px 10px;background:var(--panel);border:2px solid var(--line);border-radius:10px;font-size:12.5px;line-height:1.3;color:var(--dim)}
+.steps b{display:flex;align-items:center;gap:8px;margin-bottom:3px;font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.05em;color:var(--ink)}
+.steps b::before{content:counter(step);display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--yel);color:var(--line);font-size:15px}
+
+/* roster picker */
+#picker h2{margin:2px 0 0;font-family:var(--display);font-weight:400;font-size:26px;letter-spacing:.05em;color:var(--yel);text-shadow:3px 3px 0 var(--line)}
+#picker .sub{margin:0 0 8px;color:var(--dim);font-size:13px}
+#title.picking .pitch,#title.picking .steps{display:none}
+#title.picking .fan{margin:12px 0 8px}
+.link{margin-top:4px!important;padding:4px 12px!important}
+.modes{display:grid;gap:8px}
+.mode{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+  padding:7px 10px;text-align:left;color:var(--ink);font:inherit;cursor:pointer;
+  border:3px solid var(--line);border-radius:14px;box-shadow:4px 4px 0 var(--line);
+  transition:transform .08s,box-shadow .08s,filter .15s;
+}
+.mode:hover{filter:brightness(1.1)}
+.mode:active{transform:translate(3px,3px);box-shadow:1px 1px 0 var(--line)}
+.mode:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.mode.hero{background:linear-gradient(100deg,rgba(236,59,59,.55),rgba(47,134,255,.55)),var(--panel)}
+.mode.anime{background:linear-gradient(100deg,rgba(142,77,255,.6),rgba(255,94,168,.5)),var(--panel)}
+.mode b{display:block;font-family:var(--display);font-weight:400;font-size:22px;letter-spacing:.05em;line-height:1;text-shadow:2px 2px 0 var(--line)}
+.mode small{display:block;margin-top:2px;font-size:11.5px;font-weight:700;color:var(--ink);opacity:.85}
+.thumbs{display:flex;gap:6px;flex:none}
+.thumbs img,.thumbs i{width:34px;height:45px;border:2px solid var(--line);border-radius:8px;object-fit:cover;background:var(--panel-hi)}
+.thumbs i{display:grid;place-items:center;font-style:normal;font-size:24px;background:var(--ani)}
+.link{display:block;margin:10px auto 0;padding:8px 12px;background:none;border:0;color:var(--dim);font:inherit;font-weight:800;text-decoration:underline;cursor:pointer}
+.link:focus-visible{outline:3px solid #fff;outline-offset:2px}
+
+/* team panels */
+.side{--team:var(--p1);padding:8px;box-shadow:4px 4px 0 var(--line),inset 0 4px 0 var(--team);transition:border-color .2s,box-shadow .2s}
+#side1{--team:var(--p2)}
+.side.turn{border-color:var(--yel);box-shadow:4px 4px 0 var(--line),0 0 0 3px rgba(255,207,46,.35),inset 0 4px 0 var(--team)}
+.side.champ{border-color:var(--good);box-shadow:4px 4px 0 var(--line),0 0 0 3px rgba(61,220,132,.45),inset 0 4px 0 var(--good)}
+.who{display:flex;align-items:center;gap:8px;margin-bottom:6px;min-width:0}
+.who .name{padding:4px 18px 3px 10px;background:var(--team);color:var(--line);clip-path:polygon(0 0,100% 0,calc(100% - 10px) 100%,0 100%);font-family:var(--display);font-weight:400;font-size:20px;letter-spacing:.05em;line-height:1}
+.tag{font-family:var(--display);font-size:15px;letter-spacing:.06em;line-height:1;padding:3px 9px;border:2px solid var(--line);border-radius:6px;background:var(--yel);color:var(--line)}
+.tag:empty{display:none}
+.side.champ .tag{background:var(--good)}
+.who .k{margin-left:auto;font-size:13px;font-weight:800;color:var(--dim)}
+.cash{font-family:var(--display);font-size:20px;letter-spacing:.05em;line-height:1;padding:3px 10px;border:2px solid var(--good);border-radius:999px;background:rgba(61,220,132,.13);color:var(--good)}
+.cash.flash{animation:flash .35s}
+@keyframes flash{0%{transform:scale(1.28)}100%{transform:scale(1)}}
+
+.slots{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.slot{
+  position:relative;overflow:hidden;aspect-ratio:4/5;max-width:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  padding:4px 2px;text-align:center;font-size:10px;line-height:1.05;
+  border:2px dashed var(--edge);border-radius:10px;background:rgba(255,255,255,.03);color:var(--dim);
+}
+.slot .plus{font-size:24px;opacity:.45}
+.slot .e{font-size:clamp(22px,7.5vw,34px);line-height:1}
+.slot .n{overflow-wrap:anywhere}
+.slot .pw{font-family:var(--display);font-size:17px;letter-spacing:.05em;color:var(--yel)}
+.slot.M{border:2px solid var(--marvel);background:linear-gradient(180deg,rgba(236,59,59,.34),rgba(236,59,59,.1));color:var(--ink)}
+.slot.D{border:2px solid var(--dc);background:linear-gradient(180deg,rgba(47,134,255,.36),rgba(47,134,255,.1));color:var(--ink)}
+.slot.A{border:2px solid var(--ani);background:linear-gradient(180deg,rgba(142,77,255,.4),rgba(142,77,255,.12));color:var(--ink)}
+.slot.img{padding:0;justify-content:flex-end;background:var(--panel-hi)}
+.slot .ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slot.img .n{position:relative;width:100%;padding:16px 2px 3px;background:linear-gradient(transparent,rgba(0,0,0,.88) 70%);color:#fff;font-weight:800;text-shadow:0 1px 2px #000}
+.slot.img .pw{position:absolute;top:3px;left:3px;min-width:22px;padding:2px 4px 1px;border:2px solid var(--line);border-radius:6px;background:var(--yel);color:var(--line);font-size:14px;line-height:1}
+.slot.pop{animation:pop .5s}
+.slot.clash{outline:3px solid var(--yel);outline-offset:1px;z-index:1;animation:clash .3s ease-in-out infinite alternate}
+.slot.win{outline:3px solid var(--good);outline-offset:1px;transform:scale(1.06);z-index:1}
+.slot.lose{opacity:.38;filter:grayscale(.6)}
+@keyframes pop{0%{transform:scale(.3) rotate(-12deg)}70%{transform:scale(1.15)}100%{transform:scale(1)}}
+@keyframes clash{to{transform:scale(1.08)}}
+
+/* the character up for bid */
+#stage{position:relative;overflow:hidden;margin:8px 0;padding:10px}
+#stage.M{background:linear-gradient(160deg,#5a1626,var(--panel) 72%)}
+#stage.D{background:linear-gradient(160deg,#0f2f6a,var(--panel) 72%)}
+#stage.A{background:linear-gradient(160deg,#35176e,var(--panel) 72%)}
+.hero{position:relative;isolation:isolate;display:flex;align-items:stretch;gap:12px;text-align:left}
+.hero::before{
+  content:"";position:absolute;left:-40px;top:-30px;z-index:-1;width:180px;height:180px;
+  background:repeating-conic-gradient(rgba(255,255,255,.1) 0 7deg,transparent 7deg 14deg);
+  -webkit-mask:radial-gradient(circle,#000 25%,transparent 70%);
+  mask:radial-gradient(circle,#000 25%,transparent 70%);
+}
+.info{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between;gap:4px}
+.shead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+#rnd{font-size:12px;font-weight:800;color:var(--dim);letter-spacing:.04em;text-transform:uppercase}
+.co{font-family:var(--display);font-size:16px;letter-spacing:.08em;line-height:1;padding:3px 10px;border:2px solid var(--line);border-radius:6px;background:var(--edge);color:#fff;max-width:68%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.co.M{background:var(--marvel)}
+.co.D{background:var(--dc)}
+.co.A{background:var(--ani)}
+#medal{
+  --c:var(--edge);
+  flex:none;width:96px;height:128px;display:grid;place-items:center;overflow:hidden;
+  border:3px solid var(--line);border-radius:12px;font-size:52px;line-height:1;
+  background:radial-gradient(circle at 35% 28%,rgba(255,255,255,.28),transparent 55%),var(--c);
+  box-shadow:3px 3px 0 var(--line);
+}
+#medal.M{--c:var(--marvel)}
+#medal.D{--c:var(--dc)}
+#medal.A{--c:var(--ani)}
+#medal img{width:100%;height:100%;object-fit:cover;display:block}
+.rolling #medal{animation:shake .15s infinite}
+@keyframes shake{50%{transform:rotate(3deg) scale(1.04)}}
+#hname{margin:0;font-family:var(--display);font-weight:400;font-size:27px;line-height:1.05;letter-spacing:.05em;text-wrap:balance;text-shadow:2px 2px 0 var(--line)}
+.pow{display:flex;align-items:center;gap:4px 10px}
+.pow .lbl{font-family:var(--display);font-size:18px;letter-spacing:.05em;line-height:1;color:var(--yel)}
+.pow .lbl b{font-weight:400;font-size:22px}
+#meter{flex:1;min-width:60px;max-width:130px;display:grid;grid-template-columns:repeat(10,1fr);gap:3px}
+#meter i{height:10px;border:2px solid var(--line);border-radius:3px;background:rgba(255,255,255,.1)}
+#meter i.on{background:linear-gradient(180deg,var(--yel-hi),var(--yel))}
+.bid{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:4px 10px;border:3px solid var(--line);border-radius:10px;background:rgba(0,0,0,.32)}
+.bid .k{display:block;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--dim)}
+.bid #bidamt{font-family:var(--display);font-weight:400;font-size:32px;line-height:1;letter-spacing:.04em;color:var(--yel)}
+#lead{font-size:13px;font-weight:800;line-height:1.2;text-align:right;color:var(--ink)}
+.burst{position:absolute;left:50px;bottom:-12px;z-index:3;width:78px;height:78px;filter:drop-shadow(2px 2px 0 var(--line));animation:pop .45s}
+.burst span{display:grid;place-items:center;width:100%;height:100%;transform:rotate(-8deg);background:var(--yel);color:var(--line);font-family:var(--display);font-size:21px;letter-spacing:.04em;clip-path:polygon(50% 0%,61% 17%,80% 8%,78% 29%,98% 32%,85% 50%,98% 68%,78% 71%,80% 92%,61% 83%,50% 100%,39% 83%,20% 92%,22% 71%,2% 68%,15% 50%,2% 32%,22% 29%,20% 8%,39% 17%)}
+#turn{min-height:18px;margin-top:8px;font-size:13px;text-align:center;color:var(--dim)}
+#acts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:4px}
+#acts .btn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:50px;padding:6px 2px;font-size:21px}
+#acts .btn small{font-family:var(--body);font-size:10px;font-weight:800;letter-spacing:0;opacity:.75}
+#msg{min-height:20px;margin-top:6px;text-align:center;font-size:14px;font-weight:800;color:var(--yel)}
+
+/* fight result */
+#result{margin:8px 0;padding:10px 12px;text-align:center}
+#rtitle{margin:0;font-family:var(--display);font-weight:400;font-size:34px;line-height:1.05;letter-spacing:.04em;color:var(--yel);text-shadow:3px 3px 0 var(--line)}
+#rtitle.hit{animation:hit .3s ease-out}
+#rtitle.victory{text-shadow:3px 3px 0 var(--marvel),6px 6px 0 var(--line)}
+@keyframes hit{0%{transform:scale(1.7) rotate(-7deg)}100%{transform:scale(1) rotate(0)}}
+.board{display:flex;align-items:flex-end;justify-content:center;gap:16px;margin:10px 0 4px}
+.board .pn{display:flex;flex-direction:column;align-items:center;min-width:0}
+.board .pn span{font-size:13px;font-weight:800;color:var(--dim)}
+.board .pn b{font-family:var(--display);font-weight:400;font-size:48px;line-height:1;text-shadow:2px 2px 0 var(--line)}
+#bs0{color:var(--p1)}
+#bs1{color:var(--p2)}
+.board .dash{font-family:var(--display);font-size:40px;line-height:1.3;color:var(--dim)}
+#why{max-width:44ch;margin:6px auto 8px;color:var(--dim);line-height:1.45}
+#result .btn.big{margin:6px 0 2px;padding:10px 20px;font-size:26px}
+
+@media (max-height:720px){
+  #medal{width:80px;height:107px}
+  #hname{font-size:23px}
+  .slot{aspect-ratio:1}
+  .slot .e{font-size:22px}
+  #acts .btn{min-height:44px}
+  .burst{left:36px;width:66px;height:66px}
+}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+#loader{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:#0d0d2b radial-gradient(ellipse 110% 55% at 50% -8%,rgba(255,207,46,.25),transparent 62%);transition:opacity .4s}
+#loader.done{opacity:0;pointer-events:none}
+.lbox{width:min(320px,100%);text-align:center}
+.lt{font-family:var(--display,'Bangers',cursive);font-size:clamp(38px,12vw,58px);line-height:.95;color:#ffcf2e;text-shadow:3px 3px 0 #ec3b3b,6px 6px 0 #06061a;transform:rotate(-3deg);margin-bottom:22px}
+.lbar{height:18px;border:3px solid #06061a;border-radius:10px;background:#1b1b45;box-shadow:3px 3px 0 #06061a;overflow:hidden}
+.lbar i{display:block;height:100%;width:0;background:linear-gradient(180deg,#ffe680,#ffcf2e 55%);transition:width .2s}
+.lmsg{margin-top:12px;font-weight:800;font-size:14px;color:#aaaad8}
+</style>
+
+<div id="loader" role="status" aria-live="polite"><div class="lbox"><div class="lt">Battle for Characters!</div><div class="lbar"><i id="lbar"></i></div><div class="lmsg">Loading… <span id="lpct">0%</span></div></div></div>
+<div id="app">
+
+  <section id="title">
+    <h1><span class="t1">Battle</span><span class="t2">for</span><span class="t3">Characters!</span></h1>
+    <div class="fan" aria-hidden="true">
+      <img class="D" style="--r:-12deg;--y:10px" src="img/batman.jpg" alt="">
+      <img class="M" style="--r:-6deg;--y:2px" src="img/spider-man.jpg" alt="">
+      <img class="D c" style="--r:0deg;--y:-6px" src="img/superman.jpg" alt="">
+      <img class="M" style="--r:6deg;--y:2px" src="img/iron-man.jpg" alt="">
+      <img class="D" style="--r:12deg;--y:10px" src="img/wonder-woman.jpg" alt="">
+    </div>
+    <p class="pitch">Each side has 5 slots and $20. Outbid your rival for Marvel and DC characters, then fight slot by slot.</p>
+    <ol class="steps">
+      <li><b>Bid</b>Outbid your rival for each character.</li>
+      <li><b>Build</b>Fill all 5 slots with $20.</li>
+      <li><b>Fight</b>Slot vs slot: more power, better odds.</li>
+    </ol>
+    <div id="menu">
+      <button class="btn big" id="playCpu">Play vs CPU</button>
+      <button class="btn big blue" id="play2p">Play with a friend</button>
+    </div>
+    <div id="picker" class="hide">
+      <h2>Pick your roster</h2>
+      <p class="sub" id="pickSub">Playing vs CPU</p>
+      <div class="modes">
+        <button class="mode hero" data-mode="hero">
+          <span><b>Marvel × DC</b><small>28 comic heroes</small></span>
+          <span class="thumbs" aria-hidden="true"><img src="img/spider-man.jpg" alt=""><img src="img/batman.jpg" alt=""><img src="img/iron-man.jpg" alt=""></span>
+        </button>
+        <button class="mode anime" data-mode="anime">
+          <span><b>Random Anime</b><small>28 characters, shuffled every game</small></span>
+          <span class="thumbs" aria-hidden="true"><img src="img/anime-naruto.jpg" alt=""><img src="img/anime-goku.jpg" alt=""><img src="img/anime-gojo.jpg" alt=""></span>
+        </button>
+      </div>
+      <button class="link" id="back">Back</button>
+    </div>
+  </section>
+
+  <section id="game" class="hide">
+    <div class="panel side" id="side1">
+      <div class="who"><b class="name" id="n1">CPU</b><span class="tag" id="t1"></span><span class="k" id="k1">0/5</span><span class="cash" id="c1">$20</span></div>
+      <div class="slots" id="s1"></div>
+    </div>
+
+    <div class="panel" id="stage">
+      <div class="hero">
+        <div id="medal"><img id="himg" alt="" hidden><span id="hemoji">❓</span></div>
+        <div class="burst" id="burst" hidden><span id="bursttxt">SOLD!</span></div>
+        <div class="info">
+          <div class="shead"><span id="rnd">Round 1</span><span class="co" id="co">?</span></div>
+          <p id="hname">Rolling…</p>
+          <div class="pow">
+            <span class="lbl">Power <b id="hpow">?</b></span>
+            <div id="meter" role="img" aria-label="Power meter"></div>
+          </div>
+          <div class="bid">
+            <div><span class="k">Current bid</span><span id="bidamt">–</span></div>
+            <div id="lead">Rolling…</div>
+          </div>
+        </div>
+      </div>
+      <div id="turn"></div>
+      <div id="acts">
+        <button class="btn" data-r="1">+$1<small>bid $1</small></button>
+        <button class="btn" data-r="2">+$2<small>bid $2</small></button>
+        <button class="btn" data-r="5">+$5<small>bid $5</small></button>
+        <button class="btn red" id="pass">Pass<small>save cash</small></button>
+      </div>
+      <div id="msg" role="status" aria-live="polite"></div>
+    </div>
+
+    <div class="panel hide" id="result">
+      <h2 id="rtitle">Teams are ready!</h2>
+      <div class="board hide" id="board">
+        <div class="pn"><span id="bn0">Player 1</span><b id="bs0">0</b></div>
+        <span class="dash">–</span>
+        <div class="pn"><span id="bn1">CPU</span><b id="bs1">0</b></div>
+      </div>
+      <p id="why"></p>
+      <button class="btn red big hide" id="fightBtn">FIGHT!</button>
+      <button class="btn big hide" id="again">Play again</button>
+    </div>
+
+    <div class="panel side" id="side0">
+      <div class="who"><b class="name" id="n0">Player 1</b><span class="tag" id="t0"></span><span class="k" id="k0">0/5</span><span class="cash" id="c0">$20</span></div>
+      <div class="slots" id="s0"></div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+const HEROES=[
+["Superman","🦸","D",10,"img/superman.jpg"],["Batman","🦇","D",8,"img/batman.jpg"],["Wonder Woman","🛡️","D",9,"img/wonder-woman.jpg"],["The Flash","⚡","D",9,"img/the-flash.jpg"],
+["Aquaman","🔱","D",7,"img/aquaman.jpg"],["Green Lantern","💚","D",8,"img/green-lantern.jpg"],["Cyborg","🤖","D",6,"img/cyborg.jpg"],["Shazam","🌩️","D",8,"img/shazam.jpg"],
+["Green Arrow","🏹","D",5,"img/green-arrow.jpg"],["Nightwing","🥷","D",6,"img/nightwing.jpg"],["Supergirl","🦸‍♀️","D",8,"img/supergirl.jpg"],["Martian Manhunter","👽","D",8,"img/martian-manhunter.jpg"],
+["Robin","🐦","D",4,"img/robin.jpg"],["Harley Quinn","🃏","D",5,"img/harley-quinn.jpg"],
+["Spider-Man","🕷️","M",8,"img/spider-man.jpg"],["Iron Man","🚀","M",9,"img/iron-man.jpg"],["Captain America","⭐","M",8,"img/captain-america.jpg"],["Thor","🔨","M",10,"img/thor.jpg"],
+["Hulk","💪","M",10,"img/hulk.jpg"],["Black Panther","🐆","M",8,"img/black-panther.jpg"],["Black Widow","🕸️","M",6,"img/black-widow.jpg"],["Hawkeye","🎯","M",5,"img/hawkeye.jpg"],
+["Doctor Strange","🔮","M",9,"img/doctor-strange.jpg"],["Wolverine","🐺","M",8,"img/wolverine.jpg"],["Deadpool","⚔️","M",7,"img/deadpool.jpg"],["Captain Marvel","✨","M",9,"img/captain-marvel.jpg"],
+["Ant-Man","🐜","M",5,"img/ant-man.jpg"],["Scarlet Witch","🌀","M",9,"img/scarlet-witch.jpg"]
+];
+/* anime roster: [name, emoji, "A", power, photo path or null, series]. Emoji shows until a photo path is set. */
+const ANIME=[
+["Naruto Uzumaki","🍥","A",9,"img/anime-naruto.jpg","Naruto"],["Sasuke Uchiha","👁️","A",9,"img/anime-sasuke.jpg","Naruto"],["Kakashi Hatake","🎭","A",8,"img/anime-kakashi.jpg","Naruto"],
+["Goku","🐉","A",10,"img/anime-goku.jpg","Dragon Ball"],["Vegeta","👑","A",9,"img/anime-vegeta.jpg","Dragon Ball"],["Gohan","📚","A",8,"img/anime-gohan.jpg","Dragon Ball"],
+["Monkey D. Luffy","🏴‍☠️","A",9,"img/anime-luffy.jpg","One Piece"],["Roronoa Zoro","⚔️","A",8,"img/anime-zoro.jpg","One Piece"],["Sanji","🍳","A",7,"img/anime-sanji.jpg","One Piece"],
+["Izuku Midoriya","💚","A",8,"img/anime-deku.jpg","Hero Academia"],["Katsuki Bakugo","💥","A",8,"img/anime-bakugo.jpg","Hero Academia"],
+["Tanjiro Kamado","🌊","A",7,"img/anime-tanjiro.jpg","Demon Slayer"],["Nezuko Kamado","🎋","A",7,"img/anime-nezuko.jpg","Demon Slayer"],["Zenitsu Agatsuma","⚡","A",6,"img/anime-zenitsu.jpg","Demon Slayer"],
+["Satoru Gojo","🕶️","A",10,"img/anime-gojo.jpg","Jujutsu Kaisen"],["Yuji Itadori","👊","A",7,"img/anime-yuji.jpg","Jujutsu Kaisen"],["Ryomen Sukuna","👹","A",10,"img/anime-sukuna.jpg","Jujutsu Kaisen"],
+["Eren Yeager","🔥","A",8,"img/anime-eren.jpg","Attack on Titan"],["Levi Ackerman","🗡️","A",9,"img/anime-levi.jpg","Attack on Titan"],["Mikasa Ackerman","🧣","A",8,"img/anime-mikasa.jpg","Attack on Titan"],
+["Ichigo Kurosaki","👻","A",9,"img/anime-ichigo.jpg","Bleach"],["Light Yagami","📓","A",5,"img/anime-light.jpg","Death Note"],["Edward Elric","⚗️","A",7,"img/anime-edward.jpg","Fullmetal"],
+["Gon Freecss","🎣","A",7,"img/anime-gon.jpg","Hunter x Hunter"],["Killua Zoldyck","🛹","A",8,"img/anime-killua.jpg","Hunter x Hunter"],
+["Denji","🪚","A",6,"img/anime-denji.jpg","Chainsaw Man"],["Makima","🐕","A",9,"img/anime-makima.jpg","Chainsaw Man"],["Saitama","🧑‍🦲","A",10,"img/anime-saitama.jpg","One-Punch Man"]
+];
+HEROES.concat(ANIME).forEach(h=>{if(h[4])new Image().src=h[4]});
+(function(){
+  const L=document.getElementById("loader"),bar=document.getElementById("lbar"),pct=document.getElementById("lpct");
+  const urls=new Set();
+  HEROES.concat(ANIME).forEach(h=>{if(h[4])urls.add(h[4])});
+  document.querySelectorAll("img").forEach(i=>{const s=i.getAttribute("src");if(s)urls.add(s)});
+  const bg=getComputedStyle(document.body).backgroundImage,re=/url\(["']?([^"')]+)["']?\)/g;let m;
+  while((m=re.exec(bg)))urls.add(m[1]);
+  const jobs=[...urls].map(u=>()=>new Promise(r=>{const i=new Image();i.onload=()=>{(i.decode?i.decode():Promise.resolve()).catch(()=>{}).then(r)};i.onerror=r;i.src=u}));
+  jobs.push(()=>document.fonts?document.fonts.ready.catch(()=>{}):Promise.resolve());
+  jobs.push(()=>new Promise(r=>document.readyState==="complete"?r():addEventListener("load",r)));
+  let done=0;const total=jobs.length;
+  const tick=()=>{const p=Math.round(done/total*100);bar.style.width=p+"%";pct.textContent=p+"%"};
+  const minWait=new Promise(r=>setTimeout(r,600));
+  Promise.all(jobs.map(j=>j().then(()=>{done++;tick()}))).then(()=>minWait).then(()=>{L.classList.add("done");setTimeout(()=>L.remove(),500)});
+})();
+const CO={M:"MARVEL",D:"DC"};
+const lab=h=>h[5]||CO[h[2]];
+const SFX=["POW!","BAM!","ZAP!","WHAM!","KRAK!","BOOM!"];
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+let G;
+
+const meter=$("meter");
+for(let i=0;i<10;i++)meter.appendChild(document.createElement("i"));
+function setMeter(n){[...meter.children].forEach((s,i)=>s.classList.toggle("on",i<n));meter.setAttribute("aria-label","Power "+(n||"unknown")+" out of 10")}
+
+function names(){return ["Player 1",G.cpu?"CPU":"Player 2"]}
+
+function renderSide(p){
+  const box=$("s"+p);box.textContent="";
+  for(let i=0;i<5;i++){
+    const h=G.slots[p][i],d=document.createElement("div");
+    d.className="slot"+(h?" "+h[2]:"");d.id=`sl${p}_${i}`;
+    if(h&&h[4])d.className+=" img";
+    d.innerHTML=h?(h[4]?`<img class="ph" src="${h[4]}" alt=""><div class="n">${h[0]}</div><div class="pw">${h[3]}</div>`:`<div class="e">${h[1]}</div><div class="n">${h[0]}</div><div class="pw">${h[3]}</div>`):`<div class="plus">+</div>`;
+    box.appendChild(d);
+  }
+  const c=$("c"+p),v="$"+G.money[p];
+  if(c.textContent!==v){c.textContent=v;c.classList.remove("flash");void c.offsetWidth;c.classList.add("flash")}
+  $("k"+p).textContent=G.slots[p].length+"/5";
+}
+function renderAll(){
+  renderSide(0);renderSide(1);
+  const n=names();$("n0").textContent=n[0];$("n1").textContent=n[1];
+  $("bn0").textContent=n[0];$("bn1").textContent=n[1];
+}
+function mark(turn){
+  [0,1].forEach(i=>{
+    const on=i===turn;
+    $("side"+i).classList.toggle("turn",on);
+    $("t"+i).textContent=on?(G.cpu&&i===1?"Thinking…":"Bidding"):"";
+  });
+}
+function showHero(h,reveal){
+  const im=$("himg"),em=$("hemoji");
+  if(h[4]){im.src=h[4];im.alt=h[0];im.hidden=false;em.hidden=true}
+  else{im.hidden=true;em.textContent=h[1];em.hidden=false}
+  $("hname").textContent=h[0];
+  $("hpow").textContent=reveal?h[3]:"?";
+  setMeter(reveal?h[3]:0);
+  $("medal").className=h[2];
+  $("co").className="co "+h[2];$("co").textContent=lab(h);
+}
+function setBid(blank){
+  if(blank){$("bidamt").textContent="–";$("lead").textContent="Rolling…";return}
+  $("bidamt").textContent="$"+G.bid;
+  $("lead").textContent=G.leader<0?"No bids yet":`${names()[G.leader]} leads`;
+}
+
+function start(cpu,mode){
+  const roster=mode==="anime"?ANIME:HEROES;
+  G={cpu,roster,deck:shuffle(roster),money:[20,20],slots:[[],[]],round:0,starter:0,bid:0,leader:-1,turn:0,hero:null,busy:true};
+  [0,1].forEach(i=>{$("side"+i).classList.remove("turn","champ");$("t"+i).textContent=""});
+  $("rtitle").classList.remove("hit","victory");
+  $("burst").hidden=true;
+  $("title").classList.add("hide");$("game").classList.remove("hide");
+  $("result").classList.add("hide");$("stage").classList.remove("hide");
+  window.scrollTo(0,0);
+  renderAll();nextRound();
+}
+
+async function nextRound(){
+  const full=p=>G.slots[p].length>=5;
+  if(full(0)&&full(1))return showFight();
+  G.round++;G.busy=true;G.bid=0;G.leader=-1;
+  if(!G.deck.length)G.deck=shuffle(G.roster);
+  $("burst").hidden=true;
+  $("rnd").textContent=`Round ${G.round}`;
+  setBid(true);$("turn").textContent="";$("msg").textContent="";
+  mark(-1);setActs(false,false);
+  const st=$("stage");st.classList.remove("M","D");st.classList.add("rolling");
+  const final=G.deck.pop();
+  const t0=Date.now();
+  while(Date.now()-t0<1300){showHero(pick(G.roster),false);await sleep(80)}
+  G.hero=final;showHero(final,true);
+  st.classList.remove("rolling");st.classList.add(final[2]);
+  G.turn=G.starter;G.starter=1-G.starter;
+  const open=p=>G.slots[p].length<5,rich=p=>G.money[p]>0;
+  if(open(0)&&!open(1))return award(0,0);
+  if(open(1)&&!open(0))return award(1,0);
+  if(!rich(0)&&!rich(1))return award(G.turn,0);
+  if(!rich(0)||!rich(1))return award(rich(0)?0:1,1);
+  turnStart();
+}
+function say(t){$("msg").textContent=t}
+function setActs(on,canPass,p){
+  document.querySelectorAll("#acts [data-r]").forEach(b=>{
+    const n=+b.dataset.r;
+    b.querySelector("small").textContent="bid $"+(G.bid+n);
+    b.disabled=!(on&&p!=null&&G.bid+n<=G.money[p]);
+  });
+  $("pass").disabled=!canPass;
+}
+function turnStart(){
+  const p=G.turn;
+  setBid();
+  $("turn").textContent=`${names()[p]}’s turn`;
+  mark(p);
+  const human=!(G.cpu&&p===1);
+  G.busy=!human;
+  setActs(human,human,p);
+  if(!human)setTimeout(cpuMove,900);
+}
+function cpuMove(){
+  const p=1,h=G.hero;
+  const maxPay=Math.min(G.money[p],Math.floor(h[3]*0.95+Math.random()*2.5));
+  if(G.bid+1<=maxPay){raise(G.bid+2<=maxPay&&Math.random()>.65?2:1)}else pass();
+}
+function raise(n){
+  const p=G.turn;
+  if(G.bid+n>G.money[p])return;
+  G.bid+=n;G.leader=p;G.turn=1-p;
+  const canOther=G.slots[G.turn].length<5&&G.money[G.turn]>G.bid;
+  if(!canOther)return award(G.leader,G.bid);
+  turnStart();
+}
+function pass(){
+  setActs(false,false);
+  if(G.leader>=0)return award(G.leader,G.bid);
+  const w=1-G.turn;
+  if(G.slots[w].length>=5){say("Nobody wants it.");return setTimeout(nextRound,1200)}
+  award(w,Math.min(1,G.money[w]));
+}
+async function award(p,cost){
+  G.busy=true;setActs(false,false);mark(-1);
+  G.money[p]-=cost;G.slots[p].push(G.hero);
+  renderAll();
+  $(`sl${p}_${G.slots[p].length-1}`).classList.add("pop");
+  $("bidamt").textContent=cost?"$"+cost:"Free";
+  $("lead").textContent=`${names()[p]} gets it`;
+  $("turn").textContent="";
+  const b=$("burst");$("bursttxt").textContent=cost?"SOLD!":"FREE!";
+  b.hidden=false;b.style.animation="none";void b.offsetWidth;b.style.animation="";
+  say(`${names()[p]} got ${G.hero[0]} ${cost?"for $"+cost:"for free"}!`);
+  await sleep(1700);
+  nextRound();
+}
+
+function showFight(){
+  $("stage").classList.add("hide");$("result").classList.remove("hide");
+  $("rtitle").textContent="Teams are ready!";
+  $("board").classList.add("hide");
+  $("why").textContent="Both sides are full. Hit Fight. More power means better odds in each slot.";
+  $("fightBtn").classList.remove("hide");$("again").classList.add("hide");
+}
+
+async function judge(){
+  try{
+    const sample=(typeof claude!=="undefined")?await claude.use("sample"):null;
+    if(!sample)return null;
+    const team=p=>G.slots[p].map(h=>`${h[0]} (${lab(h)}, power ${h[3]})`).join(", ")||"nobody";
+    const r=await sample.json(`Two teams of fictional characters fight in a slot-by-slot battle. Team 1: ${team(0)}. Team 2: ${team(1)}. Decide the overall winner, weighing the power ratings most, then matchups and abilities. Reply with ONLY JSON like {"winner":"1","reason":"one or two fun sentences"} where winner is "1", "2" or "draw".`,{modelTier:"quick"});
+    if(r&&["1","2","draw"].includes(String(r.winner)))return{t:String(r.winner)==="draw"?-1:+r.winner-1,why:r.reason||""};
+  }catch(e){}
+  return null;
+}
+
+async function battle(){
+  const judged=null;
+  const rt=$("rtitle");
+  $("fightBtn").classList.add("hide");$("again").classList.add("hide");
+  rt.textContent="Fight!";$("why").textContent="";
+  $("board").classList.remove("hide");
+  const w=[0,0],pw=[0,0];
+  const score=()=>{$("bs0").textContent=w[0];$("bs1").textContent=w[1]};
+  score();
+  for(let i=0;i<5;i++){
+    const a=G.slots[0][i],b=G.slots[1][i];
+    const x=a?a[3]:0,y=b?b[3]:0;
+    pw[0]+=x;pw[1]+=y;
+    const e0=$(`sl0_${i}`),e1=$(`sl1_${i}`);
+    e0.classList.add("clash");e1.classList.add("clash");
+    rt.textContent=pick(SFX);rt.classList.remove("hit");void rt.offsetWidth;rt.classList.add("hit");
+    await sleep(650);
+    e0.classList.remove("clash");e1.classList.remove("clash");
+    const pa=(x+y)?x/(x+y):0.5;
+    if(Math.random()<pa){w[0]++;e0.classList.add("win");e1.classList.add("lose")}
+    else{w[1]++;e1.classList.add("win");e0.classList.add("lose")}
+    score();
+    await sleep(450);
+  }
+  let t;
+  if(w[0]!==w[1])t=w[0]>w[1]?0:1;
+  else if(pw[0]!==pw[1])t=pw[0]>pw[1]?0:1;
+  else t=-1;
+  let why=`Slots won: ${w[0]} – ${w[1]}. Total power: ${pw[0]} – ${pw[1]}.`;
+  rt.classList.remove("hit");rt.textContent="Counting up…";
+  const j=await judged;
+  if(j){t=j.t;if(j.why)why=j.why}
+  rt.textContent=t<0?"It’s a draw!":`${names()[t]} wins!`;
+  if(t>=0){rt.classList.add("victory");$("side"+t).classList.add("champ");$("t"+t).textContent="Winner"}
+  $("why").textContent=why;
+  $("again").classList.remove("hide");
+}
+
+$("fightBtn").onclick=battle;
+let pendingCpu=true;
+function openPicker(cpu){
+  pendingCpu=cpu;
+  $("pickSub").textContent=cpu?"Playing vs CPU":"Playing with a friend";
+  $("menu").classList.add("hide");$("picker").classList.remove("hide");$("title").classList.add("picking");
+}
+function closePicker(){$("title").classList.remove("picking");$("picker").classList.add("hide");$("menu").classList.remove("hide")}
+$("playCpu").onclick=()=>openPicker(true);
+$("play2p").onclick=()=>openPicker(false);
+$("back").onclick=closePicker;
+document.querySelectorAll(".mode").forEach(b=>b.onclick=()=>start(pendingCpu,b.dataset.mode));
+$("again").onclick=()=>{$("game").classList.add("hide");$("title").classList.remove("hide");closePicker();window.scrollTo(0,0)};
+document.querySelectorAll("#acts [data-r]").forEach(b=>b.onclick=()=>{if(!G.busy)raise(+b.dataset.r)});
+$("pass").onclick=()=>{if(!G.busy)pass()};
+</script>
+
+<script>if("serviceWorker"in navigator&&location.protocol.startsWith("http"))addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}))</script>
